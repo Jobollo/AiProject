@@ -5,6 +5,17 @@ from math import hypot
 import pygame
 import time
 
+
+grid = []
+a = 0
+for row in range(1,11):
+    b = 0
+    for col in range(1,11):
+        grid.append([(row+a)*50,(col+b)*50])
+        b += 1
+    a += 1
+print grid
+
 class Target:
     x = 0
     y = 0
@@ -20,40 +31,32 @@ class Target:
 class Computer:
      x = 0
      y = 0
-     a = 0
      step = 10
      direction = 0
      updateCountMax = 2
-     pointMemory = [[-1,-1]]
+     gridMemory = []
+
 
      def __init__(self):
 
 
          # initial positions, no collision.
-         self.x = randint(1,99) * 10
-         self.y = randint(1,99) * 10
+         c = grid[randint(0,99)]
+         self.x = c[0]
+         self.y = c[1]
 
      def update(self):
-         if self.a <= 4:
-             for i in range(0,len(self.pointMemory)):
-                 if self.direction == 0 and self.x + self.step == self.pointMemory[i][0] and self.y == self.pointMemory[i][1]:
-                     return
-                 if self.direction == 1 and self.x - self.step == self.pointMemory[i][0] and self.y == self.pointMemory[i][1]:
-                     return
-                 if self.direction == 2 and self.y - self.step == self.pointMemory[i][1] and self.x == self.pointMemory[i][0]:
-                     return
-                 if self.direction == 3 and self.y + self.step == self.pointMemory[i][1] and self.x == self.pointMemory[i][0]:
-                     return
-         if self.direction == 0:
-             self.x = self.x + self.step
-         if self.direction == 1:
-             self.x = self.x - self.step
-         if self.direction == 2:
-             self.y = self.y - self.step
-         if self.direction == 3:
-             self.y = self.y + self.step
-         self.pointMemory.append([self.x,self.y])
-         self.a = 0
+         if self.direction == 0 and self.x < 950:
+            self.x = self.x + self.step
+         if self.direction == 1 and self.x > 50:
+            self.x = self.x - self.step
+         if self.direction == 2 and self.y > 50:
+            self.y = self.y - self.step
+         if self.direction == 3 and self.y < 950:
+            self.y = self.y + self.step
+         if [self.x,self.y] in grid:
+             self.gridMemory.append([self.x,self.y])
+
 
 
      def moveRight(self):
@@ -69,19 +72,31 @@ class Computer:
          self.direction = 3
 
      def search(self):
-         if self.x > 0 and self.direction != 0:
-             self.moveLeft()
+         if [self.x,self.y] in grid:
+             if self.x >= 150 and [self.x - self.step * 10, self.y] not in self.gridMemory:
+                    self.moveLeft()
 
-         elif self.y > 0 and self.direction != 3:
-            self.moveUp()
+             elif self.y >= 150 and [self.x, self.y - self.step * 10] not in self.gridMemory:
+                 for i in range(0, 10):
+                    self.moveUp()
 
-         elif self.x < 990:
-             self.moveRight()
+             elif self.x <= 850 and [self.x + self.step * 10, self.y] not in self.gridMemory:
+                 for i in range(0, 10):
+                    self.moveRight()
 
-         elif self.y < 990:
-             self.moveDown()
-
-         self.a += 1
+             elif self.y <= 850 and [self.x, self.y + self.step * 10] not in self.gridMemory:
+                 for i in range(0, 10):
+                    self.moveDown()
+             else:
+                 r = randint(0,3)
+                 if r == 0 and self.x > 150:
+                     self.moveLeft()
+                 elif r == 1 and self.y > 150:
+                     self.moveUp()
+                 elif r == 2 and self.x < 850:
+                     self.moveRight()
+                 elif r == 3 and self.x < 850:
+                     self.moveDown()
 
 
      def draw(self, surface, image):
@@ -106,7 +121,11 @@ class App:
         self._target_surf = None
         self.game = Game()
         self.target = Target(randint(1,99), randint(1,99))
-        self.computer = Computer()
+        self.computer1 = Computer()
+        self.computer2 = Computer()
+        self.computer3 = Computer()
+        self.computer4 = Computer()
+        self.computer5 = Computer()
 
     def on_init(self):
         pygame.init()
@@ -122,22 +141,25 @@ class App:
         if event.type == QUIT:
             self._running = False
 
-    def on_loop(self):
-        self.computer.search()
-        self.computer.update()
+    def on_loop(self, computer):
+        computer.search()
+        computer.update()
 
-        # does agent see target?
-        if self.game.isCollision(self.target.x, self.target.y, self.computer.x, self.computer.y):
+# does agent see target?
+        if self.game.isCollision(self.target.x, self.target.y, computer.x, computer.y):
             self.target.x = randint(1, 99) * 10
             self.target.y = randint(1, 99) * 10
 
 
-        pass
 
     def on_render(self):
         self._display_surf.fill((0, 0, 0))
         self.target.draw(self._display_surf, self._target_surf)
-        self.computer.draw(self._display_surf, self._agent_surf)
+        self.computer1.draw(self._display_surf, self._agent_surf)
+        self.computer2.draw(self._display_surf, self._agent_surf)
+        self.computer3.draw(self._display_surf, self._agent_surf)
+        self.computer4.draw(self._display_surf, self._agent_surf)
+        self.computer5.draw(self._display_surf, self._agent_surf)
         pygame.display.flip()
 
     def on_cleanup(self):
@@ -152,7 +174,11 @@ class App:
             keys = pygame.key.get_pressed()
             if keys[K_ESCAPE]:
                 self._running = False
-            self.on_loop()
+            self.on_loop(self.computer1)
+            self.on_loop(self.computer2)
+            self.on_loop(self.computer3)
+            self.on_loop(self.computer4)
+            self.on_loop(self.computer5)
             self.on_render()
 
             time.sleep(50.0 / 1000.0);
