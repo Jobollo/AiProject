@@ -14,7 +14,6 @@ for row in range(1,11):
         grid.append([(row+a)*50,(col+b)*50])
         b += 1
     a += 1
-print grid
 
 class Target:
     x = 0
@@ -35,6 +34,9 @@ class Computer:
      direction = 0
      updateCountMax = 2
      gridMemory = []
+     id = 0
+     knownTargets = [ [ None for y in range( 5 ) ] for x in range( 5 ) ]
+
 
 
      def __init__(self):
@@ -99,6 +101,7 @@ class Computer:
                      self.moveDown()
 
 
+
      def draw(self, surface, image):
         surface.blit(image, (self.x, self.y))
 
@@ -113,6 +116,13 @@ class App:
     windowWidth = 1000
     windowHeight = 1000
     target = 0
+    targets = [ [ None for y in range( 5 ) ] for x in range( 5 ) ]
+    computer = []
+    c1 = 5
+    c2 = 5
+    c3 = 5
+    c4 = 5
+    c5 = 5
 
     def __init__(self):
         self._running = True
@@ -120,12 +130,14 @@ class App:
         self._agent_surf = None
         self._target_surf = None
         self.game = Game()
-        self.target = Target(randint(1,99), randint(1,99))
-        self.computer1 = Computer()
-        self.computer2 = Computer()
-        self.computer3 = Computer()
-        self.computer4 = Computer()
-        self.computer5 = Computer()
+        for i in range(5):
+            self.computer.append(Computer())
+            for j in range(5):
+                self.target = Target(randint(1, 99), randint(1, 99))
+                self.targets[i][j]= self.target
+
+
+
 
     def on_init(self):
         pygame.init()
@@ -141,25 +153,77 @@ class App:
         if event.type == QUIT:
             self._running = False
 
-    def on_loop(self, computer):
-        computer.search()
-        computer.update()
+    def on_loop(self):
 
-# does agent see target?
-        if self.game.isCollision(self.target.x, self.target.y, computer.x, computer.y):
-            self.target.x = randint(1, 99) * 10
-            self.target.y = randint(1, 99) * 10
 
+        # does agent see target?
+        for i in range(5):
+            self.computer[i].search()
+            self.computer[i].update()
+            for j in range(5):
+                if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[i].x, self.computer[i].y):
+                    if i == 1:
+                        self.targets[i][j].x = -1000
+                        self.targets[i][j].y = -1000
+                        self.c1 -= 1
+                        if self.c1 == 0:
+                            self.on_render()
+                            time.sleep(1)
+                            self._running = False
+                    else:
+                        self.computer[i].knownTargets[i][j] = self.targets[i][j]
+                if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[i].x, self.computer[i].y):
+                    if i == 2:
+                        self.targets[i][j].x = -1000
+                        self.targets[i][j].y = -1000
+                        self.c2 -= 1
+                        if self.c2 == 0:
+                            self.on_render()
+                            time.sleep(1)
+                            self._running = False
+                    else:
+                        self.computer[i].knownTargets[i][j] = self.targets[i][j]
+                if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[i].x, self.computer[i].y):
+                    if i == 3:
+                        self.targets[i][j].x = -1000
+                        self.targets[i][j].y = -1000
+                        self.c3 -= 1
+                        if self.c3 == 0:
+                            self.on_render()
+                            time.sleep(1)
+                            self._running = False
+                    else:
+                        self.computer[i].knownTargets[i][j] = self.targets[i][j]
+                if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[i].x, self.computer[i].y):
+                    if i == 4:
+                        self.targets[i][j].x = -1000
+                        self.targets[i][j].y = -1000
+                        self.c4 -= 1
+                        if self.c4 == 0:
+                            self.on_render()
+                            time.sleep(1)
+                            self._running = False
+                    else:
+                        self.computer[i].knownTargets[i][j] = self.targets[i][j]
+                if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[i].x, self.computer[i].y):
+                    if i == 5:
+                        self.targets[i][j].x = -1000
+                        self.targets[i][j].y = -1000
+                        self.c5 -= 1
+                        if self.c5 == 0:
+                            self.on_render()
+                            time.sleep(1)
+                            self._running = False
+                    else:
+                        self.computer[i].knownTargets[i][j] = self.targets[i][j]
 
 
     def on_render(self):
         self._display_surf.fill((0, 0, 0))
-        self.target.draw(self._display_surf, self._target_surf)
-        self.computer1.draw(self._display_surf, self._agent_surf)
-        self.computer2.draw(self._display_surf, self._agent_surf)
-        self.computer3.draw(self._display_surf, self._agent_surf)
-        self.computer4.draw(self._display_surf, self._agent_surf)
-        self.computer5.draw(self._display_surf, self._agent_surf)
+        for i in range(5):
+            self.computer[i].draw(self._display_surf, self._agent_surf)
+            for j in range(5):
+                self.targets[i][j].draw(self._display_surf, self._target_surf)
         pygame.display.flip()
 
     def on_cleanup(self):
@@ -174,11 +238,9 @@ class App:
             keys = pygame.key.get_pressed()
             if keys[K_ESCAPE]:
                 self._running = False
-            self.on_loop(self.computer1)
-            self.on_loop(self.computer2)
-            self.on_loop(self.computer3)
-            self.on_loop(self.computer4)
-            self.on_loop(self.computer5)
+            self.on_loop()
+
+
             self.on_render()
 
             time.sleep(50.0 / 1000.0);
