@@ -118,11 +118,7 @@ class App:
     target = 0
     targets = [ [ None for y in range( 5 ) ] for x in range( 5 ) ]
     computer = []
-    c1 = 5
-    c2 = 5
-    c3 = 5
-    c4 = 5
-    c5 = 5
+    targetNum = [5,5,5,5,5]
 
     def __init__(self):
         self._running = True
@@ -162,60 +158,19 @@ class App:
             self.computer[i].update()
             for j in range(5):
                 if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[i].x, self.computer[i].y):
-                    if i == 1:
-                        self.targets[i][j].x = -1000
-                        self.targets[i][j].y = -1000
-                        self.c1 -= 1
-                        if self.c1 == 0:
-                            self.on_render()
-                            time.sleep(1)
-                            self._running = False
-                    else:
-                        self.computer[i].knownTargets[i][j] = self.targets[i][j]
-                if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[i].x, self.computer[i].y):
-                    if i == 2:
-                        self.targets[i][j].x = -1000
-                        self.targets[i][j].y = -1000
-                        self.c2 -= 1
-                        if self.c2 == 0:
-                            self.on_render()
-                            time.sleep(1)
-                            self._running = False
-                    else:
-                        self.computer[i].knownTargets[i][j] = self.targets[i][j]
-                if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[i].x, self.computer[i].y):
-                    if i == 3:
-                        self.targets[i][j].x = -1000
-                        self.targets[i][j].y = -1000
-                        self.c3 -= 1
-                        if self.c3 == 0:
-                            self.on_render()
-                            time.sleep(1)
-                            self._running = False
-                    else:
-                        self.computer[i].knownTargets[i][j] = self.targets[i][j]
-                if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[i].x, self.computer[i].y):
-                    if i == 4:
-                        self.targets[i][j].x = -1000
-                        self.targets[i][j].y = -1000
-                        self.c4 -= 1
-                        if self.c4 == 0:
-                            self.on_render()
-                            time.sleep(1)
-                            self._running = False
-                    else:
-                        self.computer[i].knownTargets[i][j] = self.targets[i][j]
-                if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[i].x, self.computer[i].y):
-                    if i == 5:
-                        self.targets[i][j].x = -1000
-                        self.targets[i][j].y = -1000
-                        self.c5 -= 1
-                        if self.c5 == 0:
-                            self.on_render()
-                            time.sleep(1)
-                            self._running = False
-                    else:
-                        self.computer[i].knownTargets[i][j] = self.targets[i][j]
+                    self.targets[i][j].x = -1000
+                    self.targets[i][j].y = -1000
+                    self.targetNum[i] -= 1
+                    if self.targetNum[i] == 0:
+                        self.on_render()
+                        time.sleep(1)
+                        self._running = False
+                else:
+                    for k in range(5):
+                        if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[k].x, self.computer[k].y):
+                            self.computer[k].knownTargets[i][j] = self.targets[i][j]
+                            #print (self.computer[k].knownTargets[i][j])
+                #if self.game.isCollision(self.computer[i].x, self.computer[i].y, self.computer[j].x, self.computer[j].y) and i != j:
 
 
     def on_render(self):
