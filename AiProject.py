@@ -33,14 +33,12 @@ class Computer:
      step = 10
      direction = 0
      updateCountMax = 2
-     gridMemory = []
-     id = 0
-     knownTargets = [ [ None for y in range( 5 ) ] for x in range( 5 ) ]
 
 
 
      def __init__(self):
-
+         self.gridMemory = []
+         self.knownTargets = [[None for y in range(5)] for x in range(5)]
 
          # initial positions, no collision.
          c = grid[randint(0,99)]
