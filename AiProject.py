@@ -23,7 +23,7 @@ class Target:
     def __init__(self, x, y):
         self.x = x * self.step
         self.y = y * self.step
-
+        self.belongsTo = 0
     def draw(self, surface, image):
         surface.blit(image, (self.x, self.y))
 
@@ -31,15 +31,14 @@ class Computer:
      x = 0
      y = 0
      step = 10
-     direction = 0
      updateCountMax = 2
 
 
 
      def __init__(self):
+         self.direction = 0
          self.gridMemory = []
          self.knownTargets = [[None for y in range(5)] for x in range(5)]
-
          # initial positions, no collision.
          c = grid[randint(0,99)]
          self.x = c[0]
@@ -121,13 +120,15 @@ class App:
     def __init__(self):
         self._running = True
         self._display_surf = None
-        self._agent_surf = None
-        self._target_surf = None
+        self._agent_surf = []
+        self._target_surf = []
+        self.agentModels = ["agent0.png","agent1.jpg","agent2.jpg","agent3.jpg","agent4.jpg"]
         self.game = Game()
         for i in range(5):
             self.computer.append(Computer())
             for j in range(5):
                 self.target = Target(randint(1, 99), randint(1, 99))
+                self.target.belongsTo = i
                 self.targets[i][j]= self.target
 
 
@@ -138,10 +139,11 @@ class App:
         self._display_surf = pygame.display.set_mode((self.windowWidth, self.windowHeight), pygame.HWSURFACE)
 
         self._running = True
-        self._agent_surf = pygame.image.load("agent.png").convert()
-        self._agent_surf = pygame.transform.scale(self._agent_surf, (10,10))
-        self._target_surf = pygame.image.load("target.png").convert()
-        self._target_surf = pygame.transform.scale(self._target_surf, (10, 10))
+        for i in range(5):
+            self._agent_surf.append(pygame.image.load(self.agentModels[i]).convert())
+            self._agent_surf[i] = pygame.transform.scale(self._agent_surf[i], (15, 15))
+            self._target_surf.append(pygame.image.load(self.agentModels[i]).convert())
+            self._target_surf[i] = pygame.transform.scale(self._target_surf[i], (10, 10))
 
     def on_event(self, event):
         if event.type == QUIT:
@@ -174,9 +176,9 @@ class App:
     def on_render(self):
         self._display_surf.fill((0, 0, 0))
         for i in range(5):
-            self.computer[i].draw(self._display_surf, self._agent_surf)
+            self.computer[i].draw(self._display_surf, self._agent_surf[i])
             for j in range(5):
-                self.targets[i][j].draw(self._display_surf, self._target_surf)
+                self.targets[i][j].draw(self._display_surf, self._target_surf[i])
         pygame.display.flip()
 
     def on_cleanup(self):
