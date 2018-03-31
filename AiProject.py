@@ -38,7 +38,9 @@ class Computer:
      def __init__(self):
          self.direction = 0
          self.gridMemory = []
-         self.knownTargets = [[None for y in range(5)] for x in range(5)]
+         self.knownTargets = [[[None for z in range(2)] for y in range(5)] for x in range(5)]
+         self.nextTarget = []
+         self.knowsTarget = 0
          # initial positions, no collision.
          c = grid[randint(0,99)]
          self.x = c[0]
@@ -97,6 +99,23 @@ class Computer:
                  elif r == 3 and self.x < 850:
                      self.moveDown()
 
+     def moveToTarget(self, x,y):
+         if self.x > x:
+             self.moveLeft()
+
+         if self.x < x:
+             self.moveRight()
+
+         if self.x == x:
+             if self.y < y:
+                 self.moveDown()
+
+             if self.y > y:
+                 self.moveUp()
+
+     def draw(self, surface, image):
+         surface.blit(image, (self.x, self.y))
+
 
 
      def draw(self, surface, image):
@@ -149,10 +168,7 @@ class App:
         if event.type == QUIT:
             self._running = False
 
-    def on_loop(self):
-
-
-        # does agent see target?
+    def competition(self):
         for i in range(5):
             self.computer[i].search()
             self.computer[i].update()
@@ -169,8 +185,60 @@ class App:
                     for k in range(5):
                         if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[k].x, self.computer[k].y):
                             self.computer[k].knownTargets[i][j] = self.targets[i][j]
+
+    def collaboration(self):
+
+
+        # does agent see target?
+        for i in range(5):
+            if self.computer[i].knowsTarget == 0:
+                self.computer[i].search()
+            elif self.computer[i].knowsTarget == 1:
+                #print self.computer[i].nextTarget
+                self.computer[i].moveToTarget(self.computer[i].nextTarget[0],self.computer[i].nextTarget[1])
+            self.computer[i].update()
+            for j in range(5):
+                if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[i].x, self.computer[i].y):
+                    self.targets[i][j].x = -1000
+                    self.targets[i][j].y = -1000
+                    for k in range(5):
+                        self.computer[k].knownTargets[i][j] = [None, None]
+                    if self.computer[i].knowsTarget == 1:
+                       if all(self.computer[i].x not in el for el in grid):
+                           if self.computer[i].x < 950:
+                                self.computer[i].moveRight()
+                           else:
+                                self.computer[i].moveLeft()
+                       if all(self.computer[i].y not in el for el in grid):
+                           if self.computer[i].y > 50:
+                                self.computer[i].moveUp()
+                           else:
+                                self.computer[i].moveDown()
+                    self.computer[i].knowsTarget = 0
+                    self.targetNum[i] -= 1
+                    if all(el == 0 for el in self.targetNum):
+                        self.on_render()
+                        time.sleep(1)
+                        self._running = False
+                else:
+                    for k in range(5):
+                        if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[k].x, self.computer[k].y):
+                            self.computer[k].knownTargets[i][j][0] = self.computer[k].x
+                            self.computer[k].knownTargets[i][j][1] = self.computer[k].y
                             #print (self.computer[k].knownTargets[i][j])
-                #if self.game.isCollision(self.computer[i].x, self.computer[i].y, self.computer[j].x, self.computer[j].y) and i != j:
+                if  i != j and self.game.isCollision(self.computer[i].x, self.computer[i].y, self.computer[j].x, self.computer[j].y):
+                    if next(item for item in self.computer[i].knownTargets[j] if item is not None) != [None, None]:
+                        self.computer[j].knowsTarget = 1
+                        try:
+                            self.computer[j].nextTarget = next(item for item in self.computer[i].knownTargets[j] if item is not None)
+                        except Exception as e:
+                            print e
+                    if next(item for item in self.computer[j].knownTargets[i] if item is not None) != [None, None]:
+                        self.computer[i].knowsTarget = 1
+                        try:
+                            self.computer[i].nextTarget = next(item for item in self.computer[j].knownTargets[i] if item is not None)
+                        except Exception as e:
+                            print e
 
 
     def on_render(self):
@@ -193,7 +261,7 @@ class App:
             keys = pygame.key.get_pressed()
             if keys[K_ESCAPE]:
                 self._running = False
-            self.on_loop()
+            self.collaboration()
 
 
             self.on_render()
