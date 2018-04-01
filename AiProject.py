@@ -50,6 +50,9 @@ class Computer:
          #previous x and y
          self.prevX = 0
          self.prevY = 0
+         self.empathy = 0
+         self.memory = [0,0,0,0,0]
+         self.chanceToHelp = 0
          # initial positions, no collision.
          c = grid[randint(0,99)]
          self.x = c[0]
@@ -214,6 +217,7 @@ class App:
                     self.targetNum[i] -= 1
                     #if agent has no targets left end game
                     if self.targetNum[i] == 0:
+                        print "agent " + str(i) + " wins."
                         self.on_render()
                         time.sleep(1)
                         self._running = False
@@ -271,19 +275,21 @@ class App:
                             self.computer[k].knownTargets[i][j][1] = self.computer[k].y
                 #if 2 agents collide then they chack if they have any targets that belong to the other agent and then they tell them
                 if  i != j and self.game.isCollision(self.computer[i].x, self.computer[i].y, self.computer[j].x, self.computer[j].y):
-                    if next(item for item in self.computer[i].knownTargets[j] if item is not None) != [None, None]:
+                    if self.computer[j].knowsTarget != 1 and next(item for item in self.computer[i].knownTargets[j] if item is not None) != [None, None]:
+                        print "agent " + str(i) + " helped agent " + str(j) + "."
                         self.computer[j].knowsTarget = 1
                         try:
                             self.computer[j].nextTarget = next(item for item in self.computer[i].knownTargets[j] if item is not None)
                         except Exception as e:
                             print e
-                    if next(item for item in self.computer[j].knownTargets[i] if item is not None) != [None, None]:
+                    if self.computer[i].knowsTarget != 1 and next(item for item in self.computer[j].knownTargets[i] if item is not None) != [None, None]:
+                        print "agent " + str(j) + " helped agent " + str(i) + "."
                         self.computer[i].knowsTarget = 1
                         try:
                             self.computer[i].nextTarget = next(item for item in self.computer[j].knownTargets[i] if item is not None)
                         except Exception as e:
                             print e
-    #third scenario jsut a copy of collaboration for now
+    #third scenario
     def compassion(self):
 
 
@@ -297,6 +303,9 @@ class App:
                 if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[i].x, self.computer[i].y):
                     self.targets[i][j].x = -1000
                     self.targets[i][j].y = -1000
+                    #empathy increasing will make it more likely this agent will help an agent who has
+                    #collected less targets
+                    self.computer[i].empathy += 20
                     for k in range(5):
                         self.computer[k].knownTargets[i][j] = [None, None]
                     if self.computer[i].knowsTarget == 1:
@@ -313,6 +322,7 @@ class App:
                     self.computer[i].knowsTarget = 0
                     self.targetNum[i] -= 1
                     if self.targetNum[i] == 0:
+                        print "agent " + str(i) + " wins."
                         self.on_render()
                         time.sleep(1)
                         self._running = False
@@ -322,18 +332,34 @@ class App:
                             self.computer[k].knownTargets[i][j][0] = self.computer[k].x
                             self.computer[k].knownTargets[i][j][1] = self.computer[k].y
                 if  i != j and self.game.isCollision(self.computer[i].x, self.computer[i].y, self.computer[j].x, self.computer[j].y):
-                    if next(item for item in self.computer[i].knownTargets[j] if item is not None) != [None, None]:
-                        self.computer[j].knowsTarget = 1
-                        try:
-                            self.computer[j].nextTarget = next(item for item in self.computer[i].knownTargets[j] if item is not None)
-                        except Exception as e:
-                            print e
-                    if next(item for item in self.computer[j].knownTargets[i] if item is not None) != [None, None]:
-                        self.computer[i].knowsTarget = 1
-                        try:
-                            self.computer[i].nextTarget = next(item for item in self.computer[j].knownTargets[i] if item is not None)
-                        except Exception as e:
-                            print e
+                    if self.computer[j].knowsTarget != 1 and next(item for item in self.computer[i].knownTargets[j] if item is not None) != [None, None]:
+                        #chance to help is calculated based on how many targets each agent has collected and also
+                        #if the agent they might help has helped them before
+                        self.computer[i].chanceToHelp = self.computer[i].empathy - self.computer[j].empathy + self.computer[i].memory[j]
+                        r = randint(0, 100)
+                        if r < self.computer[i].chanceToHelp:
+                            print "agent " + str(i) + " helped agent " + str(j) + "."
+                            self.computer[j].knowsTarget = 1
+                            try:
+                                self.computer[j].nextTarget = next(item for item in self.computer[i].knownTargets[j] if item is not None)
+                                self.computer[j].memory[i] += 10
+                            except Exception as e:
+                                print e
+                        else:
+                            print "agent " + str(i) + " didn't want to help agent " + str(j) + "."
+                    if self.computer[i].knowsTarget != 1 and next(item for item in self.computer[j].knownTargets[i] if item is not None) != [None, None]:
+                        self.computer[j].chanceToHelp = self.computer[j].empathy - self.computer[i].empathy + self.computer[j].memory[i]
+                        r = randint(0, 100)
+                        if r < self.computer[j].chanceToHelp:
+                            print "agent " + str(j) + " helped agent " + str(i) + "."
+                            self.computer[i].knowsTarget = 1
+                            try:
+                                self.computer[i].nextTarget = next(item for item in self.computer[j].knownTargets[i] if item is not None)
+                                self.computer[i].memory[j] += 10
+                            except Exception as e:
+                                print e
+                        else:
+                            print "agent " + str(j) + " didn't want to help agent " + str(i) + "."
 
 
     def on_render(self):
@@ -350,13 +376,17 @@ class App:
     def on_execute(self):
         if self.on_init() is False:
             self._running = False
-
+        print "agent 0 = blue"
+        print "agent 1 = green"
+        print "agent 2 = orange"
+        print "agent 3 = purple"
+        print "agent 4 = brown"
         while self._running:
             pygame.event.pump()
             keys = pygame.key.get_pressed()
             if keys[K_ESCAPE]:
                 self._running = False
-            self.collaboration()
+            self.compassion()
 
 
             self.on_render()
