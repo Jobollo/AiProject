@@ -1,9 +1,12 @@
+from __future__ import division
 from pygame.locals import *
 from random import randint
 import math
 from math import hypot
 import pygame
 import time
+import csv
+import numpy as np
 
 #agents move along this grid and remember which points they'vr been to
 grid = []
@@ -23,7 +26,6 @@ class Target:
     def __init__(self, x, y):
         self.x = x * self.step
         self.y = y * self.step
-        self.belongsTo = 0
     def draw(self, surface, image):
         surface.blit(image, (self.x, self.y))
 
@@ -48,6 +50,7 @@ class Computer:
          #of one of their targets
          self.knowsTarget = 0
          #previous x and y
+         self.steps = 0
          self.prevX = 0
          self.prevY = 0
          self.empathy = 0
@@ -64,12 +67,16 @@ class Computer:
          self.prevY = self.y
          if self.direction == 0 and self.x < 950:
             self.x = self.x + self.step
+            self.steps += 1
          if self.direction == 1 and self.x > 50:
             self.x = self.x - self.step
+            self.steps += 1
          if self.direction == 2 and self.y > 50:
             self.y = self.y - self.step
+            self.steps += 1
          if self.direction == 3 and self.y < 950:
             self.y = self.y + self.step
+            self.steps += 1
          #if the point they are on is in the grid then add it to the memory
          if [self.x,self.y] in grid:
              self.gridMemory.append([self.x,self.y])
@@ -164,14 +171,17 @@ class App:
 
     windowWidth = 1000
     windowHeight = 1000
-    target = 0
-    #list of all targets
-    targets = [ [ None for y in range( 5 ) ] for x in range( 5 ) ]
-    computer = []
-    #list of targets left for each agent
-    targetNum = [5,5,5,5,5]
+
 
     def __init__(self):
+        self.target = 0
+        # list of all targets
+        self.targets = [[None for y in range(5)] for x in range(5)]
+        self.computer = []
+        # list of targets left for each agent
+        self.targetNum = [5, 5, 5, 5, 5]
+        self.scenario = 0
+        self.steps = [0,0,0,0,0]
         self._running = True
         self._display_surf = None
         self._agent_surf = []
@@ -206,9 +216,11 @@ class App:
 
     #first scenario
     def competition(self):
+        self.scenario = 1
         for i in range(5):
             self.computer[i].search()
             self.computer[i].update()
+            self.steps[i] = self.computer[i].steps
             for j in range(5):
                 #agent finds one of its targets so target disappears
                 if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[i].x, self.computer[i].y):
@@ -228,7 +240,7 @@ class App:
 
     #second scenario
     def collaboration(self):
-
+        self.scenario = 2
         for i in range(5):
             #agent doesn't know target so continue searching
             if self.computer[i].knowsTarget == 0:
@@ -237,6 +249,7 @@ class App:
             elif self.computer[i].knowsTarget == 1:
                 self.computer[i].moveToTarget(self.computer[i].nextTarget[0],self.computer[i].nextTarget[1])
             self.computer[i].update()
+            self.steps[i] = self.computer[i].steps
             for j in range(5):
                 if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[i].x, self.computer[i].y):
                     self.targets[i][j].x = -1000
@@ -291,14 +304,14 @@ class App:
                             print e
     #third scenario
     def compassion(self):
-
-
+        self.scenario = 3
         for i in range(5):
             if self.computer[i].knowsTarget == 0:
                 self.computer[i].search()
             elif self.computer[i].knowsTarget == 1:
                 self.computer[i].moveToTarget(self.computer[i].nextTarget[0],self.computer[i].nextTarget[1])
             self.computer[i].update()
+            self.steps[i] = self.computer[i].steps
             for j in range(5):
                 if self.game.isCollision(self.targets[i][j].x, self.targets[i][j].y, self.computer[i].x, self.computer[i].y):
                     self.targets[i][j].x = -1000
@@ -373,20 +386,21 @@ class App:
     def on_cleanup(self):
         pygame.quit()
 
-    def on_execute(self):
+    def on_execute(self, scen):
         if self.on_init() is False:
             self._running = False
-        print "agent 0 = blue"
-        print "agent 1 = green"
-        print "agent 2 = orange"
-        print "agent 3 = purple"
-        print "agent 4 = brown"
         while self._running:
             pygame.event.pump()
             keys = pygame.key.get_pressed()
             if keys[K_ESCAPE]:
                 self._running = False
-            self.compassion()
+            if scen == 1:
+                self.competition()
+
+            if scen == 2:
+                self.collaboration()
+            if scen == 3:
+                self.compassion()
 
 
             self.on_render()
@@ -395,6 +409,86 @@ class App:
 
         self.on_cleanup()
 
+
 if __name__ == "__main__" :
-    theApp = App()
-    theApp.on_execute()
+    csv = open("info.csv", "w")
+    columnTitleRow = "Scenario number, Iteration number, Agent number, # of targets collected, # of steps, " \
+                     "Agent happiness, Max happiness, Min happiness, Average happiness, Standard deviation of " \
+                     "happiness, Agent competitivness\n"
+    csv.write(columnTitleRow)
+    c = [1,2,3,4,5]
+    print "agent 0 = blue"
+    print "agent 1 = green"
+    print "agent 2 = orange"
+    print "agent 3 = purple"
+    print "agent 4 = brown"
+    for l in range(10):
+        theApp = App()
+        theApp.on_execute(1)
+        a = theApp.scenario
+        b = l + 1
+        d = []
+        e = []
+        f = []
+        for m in range(5):
+            d.append(5 - theApp.targetNum[m])
+            e.append(theApp.steps[m])
+            f.append(d[m]/(e[m]+1))
+        print f
+        g = max(f)
+        h = min(f)
+        arr = np.array(f)
+        i = np.mean(arr)
+        j = np.std(arr)
+        for m in range(5):
+            k = (f[m] - h) / (g - h)
+            row = (str(a) + "," + str(b) + "," + str(c[m]) + "," + str(d[m]) + "," + str(e[m]) + "," + str(f[m])
+                   + "," + str(g) + "," + str(h) + "," + str(i) + "," + str(j) + "," + str(k)) + "\n"
+            csv.write(row)
+    for l in range(10):
+        theApp = App()
+        theApp.on_execute(2)
+        a = theApp.scenario
+        b = l + 1
+        d = []
+        e = []
+        f = []
+        for m in range(5):
+            d.append(5 - theApp.targetNum[m])
+            e.append(theApp.steps[m])
+            f.append(d[m]/(e[m]+1))
+        print f
+        g = max(f)
+        h = min(f)
+        arr = np.array(f)
+        i = np.mean(arr)
+        j = np.std(arr)
+        for m in range(5):
+            k = 0
+            row = (str(a) + "," + str(b) + "," + str(c[m]) + "," + str(d[m]) + "," + str(e[m]) + "," + str(f[m])
+                   + "," + str(g) + "," + str(h) + "," + str(i) + "," + str(j) + "," + str(k)) + "\n"
+            csv.write(row)
+    for l in range(10):
+        theApp = App()
+        theApp.on_execute(3)
+        a = theApp.scenario
+        b = l + 1
+        d = []
+        e = []
+        f = []
+        for m in range(5):
+            d.append(5 - theApp.targetNum[m])
+            e.append(theApp.steps[m])
+            f.append(d[m]/(e[m]+1))
+        print f
+        g = max(f)
+        h = min(f)
+        arr = np.array(f)
+        i = np.mean(arr)
+        j = np.std(arr)
+        for m in range(5):
+            k = (f[m] - h) / (g - h)
+            row = (str(a) + "," + str(b) + "," + str(c[m]) + "," + str(d[m]) + "," + str(e[m]) + "," + str(f[m])
+                   + "," + str(g) + "," + str(h) + "," + str(i) + "," + str(j) + "," + str(k)) + "\n"
+            csv.write(row)
+
