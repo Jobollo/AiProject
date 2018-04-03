@@ -411,17 +411,23 @@ class App:
 
 
 if __name__ == "__main__" :
-    csv = open("info.csv", "w")
+    csv = open("G27_1.csv", "w")
+    csv2 = open("G27_2.csv", "w")
     columnTitleRow = "Scenario number, Iteration number, Agent number, # of targets collected, # of steps, " \
                      "Agent happiness, Max happiness, Min happiness, Average happiness, Standard deviation of " \
                      "happiness, Agent competitivness\n"
+    columnTitleRow2 = "Scenario number, Average happiness, Agent competitivness\n"
     csv.write(columnTitleRow)
+    csv2.write(columnTitleRow2)
     c = [1,2,3,4,5]
     print "agent 0 = blue"
     print "agent 1 = green"
     print "agent 2 = orange"
     print "agent 3 = purple"
     print "agent 4 = brown"
+
+    iarr = []
+    karr = []
     for l in range(10):
         theApp = App()
         theApp.on_execute(1)
@@ -439,12 +445,19 @@ if __name__ == "__main__" :
         h = min(f)
         arr = np.array(f)
         i = np.mean(arr)
+        iarr.append(i)
         j = np.std(arr)
         for m in range(5):
             k = (f[m] - h) / (g - h)
+            karr.append(k)
             row = (str(a) + "," + str(b) + "," + str(c[m]) + "," + str(d[m]) + "," + str(e[m]) + "," + str(f[m])
                    + "," + str(g) + "," + str(h) + "," + str(i) + "," + str(j) + "," + str(k)) + "\n"
             csv.write(row)
+    row = (str(a) + "," + str(np.mean(iarr)) + "," + str(np.mean(karr))) + "\n"
+    csv2.write(row)
+
+    iarr = []
+    karr = []
     for l in range(10):
         theApp = App()
         theApp.on_execute(2)
@@ -462,12 +475,19 @@ if __name__ == "__main__" :
         h = min(f)
         arr = np.array(f)
         i = np.mean(arr)
+        iarr.append(i)
         j = np.std(arr)
         for m in range(5):
             k = 0
+            karr.append(k)
             row = (str(a) + "," + str(b) + "," + str(c[m]) + "," + str(d[m]) + "," + str(e[m]) + "," + str(f[m])
                    + "," + str(g) + "," + str(h) + "," + str(i) + "," + str(j) + "," + str(k)) + "\n"
             csv.write(row)
+    row = (str(a) + "," + str(np.mean(iarr)) + "," + str(np.mean(karr))) + "\n"
+    csv2.write(row)
+
+    iarr = []
+    karr = []
     for l in range(10):
         theApp = App()
         theApp.on_execute(3)
@@ -485,10 +505,14 @@ if __name__ == "__main__" :
         h = min(f)
         arr = np.array(f)
         i = np.mean(arr)
+        iarr.append(i)
         j = np.std(arr)
         for m in range(5):
             k = (f[m] - h) / (g - h)
+            karr.append(k)
             row = (str(a) + "," + str(b) + "," + str(c[m]) + "," + str(d[m]) + "," + str(e[m]) + "," + str(f[m])
                    + "," + str(g) + "," + str(h) + "," + str(i) + "," + str(j) + "," + str(k)) + "\n"
             csv.write(row)
+    row = (str(a) + "," + str(np.mean(iarr)) + "," + str(np.mean(karr))) + "\n"
+    csv2.write(row)
 
